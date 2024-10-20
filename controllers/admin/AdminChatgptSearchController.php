@@ -12,8 +12,8 @@ class AdminChatgptSearchController extends ModuleAdminController
     public function initContent()
     {
 
-        if (((bool)Tools::isSubmit('submitform')) == true) {
-            $this->formProcess();
+        if (Tools::getValue('action') == 'DownloadCSV') {
+            $this->DownloadCSV();
         }
        
         // render search.tpl        
@@ -50,9 +50,11 @@ class AdminChatgptSearchController extends ModuleAdminController
             }
 
             $answer = '';
+            $id_chatgpt_log = ChatGPTLog::getLogByPrompt($prompt_final);
 
-            if(ChatGPTLog::existsPrompt($prompt_final)) {                
-                $answer = ChatGPTLog::getResponse($prompt_final);
+            if($id_chatgpt_log) {   
+                $chatlog = new ChatGPTLog($id_chatgpt_log);          
+                $answer = $chatlog->response;
                 if( Configuration::get('CHATGPT_DEBUG', '') == 1) {
                     $output .= "<p>Ya se ha realizado una consulta similar recientemente. Se recupera la del Log para no hacer otra petición a chatGPT.</p>";
                 }
@@ -104,6 +106,7 @@ class AdminChatgptSearchController extends ModuleAdminController
                     $chatgpt_log->response = $answer;
                     $chatgpt_log->date_add = date('Y-m-d H:i:s');
                     $chatgpt_log->add();
+                    $id_chatgpt_log = $chatgpt_log->id;
                 }
             }
                 
@@ -123,6 +126,10 @@ class AdminChatgptSearchController extends ModuleAdminController
                     $output .= "<div class='response'>";
                     $output .= "<h2>Resultados de la base de datos:</h2>";
                     $output .= "<div class='table-container'>";
+                    if($id_chatgpt_log) {
+                        $download_csv_url = $this->context->link->getAdminLink('AdminChatgptSearch').'&action=DownloadCSV&id_chatgpt_log='.$id_chatgpt_log;
+                        $output .= "<p><a class='btn btn-primary btn_download_csv' href='".$download_csv_url."' target='_blank'><i class='material-icons mi-assessment'>assessment</i> Descargar CSV</a></p>";
+                    }
                     $output .= "<table><thead>";
                     $output .= "<tr>";
                     // Obtener y mostrar los nombres de las columnas
@@ -161,5 +168,36 @@ class AdminChatgptSearchController extends ModuleAdminController
 
         die(json_encode(array('success' => $success, 'output' => $output)));
     }
-    
+
+
+    public function DownloadCSV(){
+        $id_chatgpt_log = Tools::getValue('id_chatgpt_log');
+        if($id_chatgpt_log) {
+            $chatgpt_log = new ChatGPTLog($id_chatgpt_log);
+            $response = $chatgpt_log->response;
+
+            if(!$response) {
+                return;
+            }
+            $result = Db::getInstance()->executeS($response);
+
+            $filename = "chatgpt_log_".$id_chatgpt_log.".csv";
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="'.$filename.'"');
+
+            $output = fopen('php://output', 'w');
+            fputcsv($output, array_keys($result[0]));
+
+            foreach ($result as $row) {
+                fputcsv($output, $row);
+            }
+
+            fclose($output);
+
+            // // force download file
+            readfile($filename);
+            unlink($filename);
+        }
+        exit();
+    }
 }
