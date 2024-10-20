@@ -1,0 +1,17 @@
+{
+  "name": "prestashop/chatpgt",
+  "description": "ChatPGT for PrestaShop",
+  "authors": [
+    {
+      "name": "Ángel Villena",
+      "email": "angel86vf@gmail.com"
+    }
+  ],
+  "autoload": {
+      "classmap": ["src"],
+    "psr-4": {
+      "PrestaShop\\Chatpgt\\": "src/"
+    }
+
+  }
+}
