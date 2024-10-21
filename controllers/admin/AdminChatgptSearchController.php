@@ -45,6 +45,7 @@ class AdminChatgptSearchController extends ModuleAdminController
 
             $prompt_final = "Devuelve únicamente el texto de una consulta MySQL a realizar en una base de datos de PrestaShop para obtener la siguiente información: ".$prompt;
             $prompt_final .= " . No incluyas ```sql al principio ni al final de la consulta. ";
+            $prompt_final .= " El prefijo de las tablas debe ser "._DB_PREFIX_.".";
             if($simple_data) {
                 $prompt_final .= " Devuelve únicamente los datos más relevantes.";
             }
