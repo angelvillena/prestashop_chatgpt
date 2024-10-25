@@ -37,7 +37,7 @@ class AdminChatgptLogController extends ModuleAdminController
     {         
         $this->fields_form = [
             'legend' => [
-                'title' => $this->trans('ChatGPR LOG', [], 'Modules.Chatgpt.Admin'),
+                'title' => $this->trans('ChatGPT LOG', [], 'Modules.Chatgpt.Admin'),
                 'icon' => 'icon-picture'
             ],
             'input' => [
